@@ -198,12 +198,10 @@ public abstract class AbstractProgramTwillRunnable<T extends ProgramRunner> impl
     Injector injector = Guice.createInjector(createModule(cConf, hConf, programOptions, programRunId));
 
     // Setup the proxy selector for in active monitoring mode
-    if (cConf.getBoolean(io.cdap.cdap.common.conf.Constants.RuntimeMonitor.ACTIVE_MONITORING, true)) {
-      oldProxySelector = ProxySelector.getDefault();
-      if (clusterMode == ClusterMode.ISOLATED) {
-        ProxySelector.setDefault(injector.getInstance(ProxySelector.class));
-        Authenticator.setDefault(injector.getInstance(Authenticator.class));
-      }
+    oldProxySelector = ProxySelector.getDefault();
+    if (clusterMode == ClusterMode.ISOLATED) {
+      ProxySelector.setDefault(injector.getInstance(ProxySelector.class));
+      Authenticator.setDefault(injector.getInstance(Authenticator.class));
     }
 
     logAppenderInitializer = injector.getInstance(LogAppenderInitializer.class);

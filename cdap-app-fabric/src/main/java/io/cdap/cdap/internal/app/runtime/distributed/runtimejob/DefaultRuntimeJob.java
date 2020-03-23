@@ -27,7 +27,6 @@ import com.google.inject.Guice;
 import com.google.inject.Inject;
 import com.google.inject.Injector;
 import com.google.inject.Module;
-import com.google.inject.PrivateModule;
 import com.google.inject.Scopes;
 import com.google.inject.multibindings.MapBinder;
 import io.cdap.cdap.api.app.ApplicationSpecification;
@@ -58,7 +57,6 @@ import io.cdap.cdap.common.logging.LoggingContextAccessor;
 import io.cdap.cdap.common.logging.common.UncaughtExceptionHandler;
 import io.cdap.cdap.common.namespace.NamespacePathLocator;
 import io.cdap.cdap.common.namespace.NoLookupNamespacePathLocator;
-import io.cdap.cdap.common.security.KeyStores;
 import io.cdap.cdap.common.utils.DirUtils;
 import io.cdap.cdap.common.utils.Networks;
 import io.cdap.cdap.internal.app.ApplicationSpecificationAdapter;
@@ -73,7 +71,7 @@ import io.cdap.cdap.internal.app.runtime.distributed.DistributedMapReduceProgram
 import io.cdap.cdap.internal.app.runtime.distributed.DistributedProgramRunner;
 import io.cdap.cdap.internal.app.runtime.distributed.DistributedWorkerProgramRunner;
 import io.cdap.cdap.internal.app.runtime.distributed.DistributedWorkflowProgramRunner;
-import io.cdap.cdap.internal.app.runtime.monitor.RuntimeMonitorServer;
+import io.cdap.cdap.internal.app.runtime.monitor.RuntimeClientService;
 import io.cdap.cdap.internal.app.runtime.monitor.ServiceSocksProxyInfo;
 import io.cdap.cdap.internal.app.runtime.monitor.TrafficRelayServer;
 import io.cdap.cdap.logging.appender.LogAppenderInitializer;
@@ -92,7 +90,6 @@ import io.cdap.cdap.security.auth.context.AuthenticationContextModules;
 import io.cdap.cdap.security.impersonation.CurrentUGIProvider;
 import io.cdap.cdap.security.impersonation.UGIProvider;
 import org.apache.twill.api.TwillRunner;
-import org.apache.twill.common.Cancellable;
 import org.apache.twill.common.Threads;
 import org.apache.twill.filesystem.Location;
 import org.apache.twill.filesystem.LocationFactory;
@@ -111,9 +108,7 @@ import java.net.InetSocketAddress;
 import java.net.ProxySelector;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
-import java.nio.file.Path;
 import java.nio.file.Paths;
-import java.security.KeyStore;
 import java.util.ArrayList;
 import java.util.Deque;
 import java.util.LinkedList;
@@ -164,7 +159,7 @@ public class DefaultRuntimeJob implements RuntimeJob {
     ProgramDescriptor programDescriptor = new ProgramDescriptor(programId, appSpec);
 
     // Create injector and get program runner
-    Injector injector = Guice.createInjector(createModules(runtimeJobEnv, createCConf(runtimeJobEnv)));
+    Injector injector = Guice.createInjector(createModules(runtimeJobEnv, createCConf(runtimeJobEnv), programRunId));
 
     LogAppenderInitializer logAppenderInitializer = injector.getInstance(LogAppenderInitializer.class);
     Deque<Service> coreServices = createCoreServices(injector);
@@ -290,7 +285,7 @@ public class DefaultRuntimeJob implements RuntimeJob {
    * Returns list of guice modules used to start the program run.
    */
   @VisibleForTesting
-  List<Module> createModules(RuntimeJobEnvironment runtimeJobEnv, CConfiguration cConf) {
+  List<Module> createModules(RuntimeJobEnvironment runtimeJobEnv, CConfiguration cConf, ProgramRunId programRunId) {
     List<Module> modules = new ArrayList<>();
     modules.add(new ConfigModule(cConf));
     modules.add(new IOModule());
@@ -326,47 +321,12 @@ public class DefaultRuntimeJob implements RuntimeJob {
         defaultProgramRunnerBinder.addBinding(ProgramType.WORKFLOW).to(DistributedWorkflowProgramRunner.class);
         defaultProgramRunnerBinder.addBinding(ProgramType.WORKER).to(DistributedWorkerProgramRunner.class);
         bind(ProgramRunnerFactory.class).to(DefaultProgramRunnerFactory.class).in(Scopes.SINGLETON);
+
+        bind(ProgramRunId.class).toInstance(programRunId);
       }
     });
 
-    // Active monitoring means we need to start the RuntimeMonitorServer for app-fabric to poll
-    if (cConf.getBoolean(Constants.RuntimeMonitor.ACTIVE_MONITORING)) {
-      modules.add(createRuntimeMonitorServerModule(cConf));
-    }
-
     return modules;
-  }
-
-  /**
-   * Optionally adds {@link RuntimeMonitorServer} binding.
-   */
-  private Module createRuntimeMonitorServerModule(CConfiguration cConf) {
-    return new PrivateModule() {
-      @Override
-      protected void configure() {
-        try {
-          Path keyStorePath = Paths.get(cConf.get(Constants.RuntimeMonitor.SERVER_KEYSTORE_PATH));
-          Path trustStorePath = Paths.get(cConf.get(Constants.RuntimeMonitor.CLIENT_KEYSTORE_PATH));
-
-          KeyStore keyStore = KeyStores.load(Locations.toLocation(keyStorePath), () -> "");
-          KeyStore trustStore = KeyStores.load(Locations.toLocation(trustStorePath), () -> "");
-
-          // Update the cConf as well to store the service proxy password
-          cConf.set(Constants.RuntimeMonitor.SERVICE_PROXY_PASSWORD, KeyStores.hash(keyStore));
-
-          bind(KeyStore.class).annotatedWith(Constants.AppFabric.KeyStore.class).toInstance(keyStore);
-          bind(KeyStore.class).annotatedWith(Constants.AppFabric.TrustStore.class).toInstance(trustStore);
-
-          bind(Cancellable.class).toInstance(() -> stop());
-          bind(RuntimeMonitorServer.class);
-          expose(RuntimeMonitorServer.class);
-
-        } catch (Exception e) {
-          // Just log if failed to load the KeyStores. It will fail when RuntimeMonitorServer is needed.
-          LOG.error("Failed to load key store and/or trust store", e);
-        }
-      }
-    };
   }
 
   @VisibleForTesting
@@ -388,10 +348,7 @@ public class DefaultRuntimeJob implements RuntimeJob {
     // Bind the traffic relay on the host, not on the loopback interface. It needs to be accessible from all workers.
     services.add(injector.getInstance(TrafficRelayService.class));
 
-    CConfiguration cConf = injector.getInstance(CConfiguration.class);
-    if (cConf.getBoolean(Constants.RuntimeMonitor.ACTIVE_MONITORING)) {
-      services.add(injector.getInstance(RuntimeMonitorServer.class));
-    }
+    services.add(injector.getInstance(RuntimeClientService.class));
 
     return services;
   }

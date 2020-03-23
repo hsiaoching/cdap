@@ -867,15 +867,6 @@ public final class Constants {
     public static final String INIT_BATCH_SIZE = "app.program.runtime.monitor.initialize.batch.size";
     public static final String RUN_RECORD_FETCHER_CLASS = "app.program.runtime.monitor.run.record.fetch.class";
 
-    /**
-     * Configuration to tell if the runtime monitoring is active
-     * An active monitoring is the app-fabric polling the remote runtime for status
-     * This is temporary until we move the SSH approach to use the RuntimeClient for monitoring.
-     */
-    public static final String ACTIVE_MONITORING = "app.program.runtime.monitor.active.monitoring";
-    public static final String SERVER_KEYSTORE_PATH = "app.program.runtime.monitor.server.keystore.path";
-    public static final String CLIENT_KEYSTORE_PATH = "app.program.runtime.monitor.client.keystore.path";
-
     public static final String BIND_ADDRESS = "app.program.runtime.monitor.server.bind.address";
     public static final String BIND_PORT = "app.program.runtime.monitor.server.bind.port";
 

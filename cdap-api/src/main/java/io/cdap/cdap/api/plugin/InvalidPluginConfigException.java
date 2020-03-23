@@ -38,7 +38,7 @@ public class InvalidPluginConfigException extends RuntimeException {
 
   public InvalidPluginConfigException(String message, Set<String> missingProperties,
                                       Set<InvalidPluginProperty> invalidProperties) {
-    super(message);
+    super(generateErrorMessage(message, missingProperties, invalidProperties));
     this.missingProperties = Collections.unmodifiableSet(new HashSet<>(missingProperties));
     this.invalidProperties = Collections.unmodifiableSet(new HashSet<>(invalidProperties));
   }
@@ -56,5 +56,27 @@ public class InvalidPluginConfigException extends RuntimeException {
    */
   public Set<InvalidPluginProperty> getInvalidProperties() {
     return invalidProperties;
+  }
+
+  private static String generateErrorMessage(String baseMessage, Set<String> missingProperties,
+                                             Set<InvalidPluginProperty> invalidProperties) {
+    if (missingProperties.isEmpty() && invalidProperties.isEmpty()) {
+      return baseMessage;
+    }
+
+    StringBuilder errorMessage = new StringBuilder(baseMessage);
+    if (missingProperties.size() == 1) {
+      errorMessage.append(String.format(" Required property '%s' is missing.", missingProperties.iterator().next()));
+    } else if (missingProperties.size() > 1) {
+      errorMessage.append(String.format(" Required properties '%s' are missing.",
+                                        String.join(", ", missingProperties)));
+    }
+
+    for (InvalidPluginProperty invalidProperty : invalidProperties) {
+      errorMessage.append(String.format(" '%s' is invalid: %s.",
+                                        invalidProperty.getName(), invalidProperty.getErrorMessage()));
+    }
+
+    return errorMessage.toString();
   }
 }

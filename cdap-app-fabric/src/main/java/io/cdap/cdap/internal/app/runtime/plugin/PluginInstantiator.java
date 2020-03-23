@@ -549,7 +549,9 @@ public class PluginInstantiator implements Closeable {
       Name nameAnnotation = field.getAnnotation(Name.class);
       String name = nameAnnotation == null ? field.getName() : nameAnnotation.value();
       PluginPropertyField pluginPropertyField = pluginClass.getProperties().get(name);
-      if (pluginPropertyField.isRequired() && !properties.getProperties().containsKey(name)) {
+      // if the property is required and it's not a macro and the property doesn't exist
+      if (pluginPropertyField.isRequired() && !macroFields.contains(name) &&
+        properties.getProperties().get(name) == null) {
         missingProperties.add(name);
         return;
       }

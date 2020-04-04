@@ -275,4 +275,12 @@
     </description>
   </property>
 
+  <property>
+    <name>ui.feature.cdc</name>
+    <value>true</value>
+    <description>
+      Enables the experimental Delta Replicator UI
+    </description>
+  </property>
+
 </configuration>

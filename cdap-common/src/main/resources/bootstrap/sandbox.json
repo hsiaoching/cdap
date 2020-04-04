@@ -67,6 +67,34 @@
         "type": "service",
         "name": "service"
       }
+    },
+    {
+      "label": "Create delta application",
+      "type": "CREATE_APPLICATION",
+      "runCondition": "ONCE",
+      "arguments": {
+        "namespace": "system",
+        "name": "delta",
+        "artifact": {
+          "name": "delta-app",
+          "version": "[0.0.0, 10.0.0)",
+          "scope": "SYSTEM"
+        },
+        "config": {
+          "service": true
+        }
+      }
+    },
+    {
+      "label": "Start delta service",
+      "type": "START_PROGRAM",
+      "runCondition": "ALWAYS",
+      "arguments": {
+        "namespace": "system",
+        "application": "delta",
+        "type": "service",
+        "name": "assessor"
+      }
     }
   ]
 }

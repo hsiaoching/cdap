@@ -104,7 +104,7 @@ class KubeTwillPreparer implements TwillPreparer {
   private final int memoryMB;
   private final int vcores;
 
-  KubeTwillPreparer(CConfiguration cConf, ApiClient apiClient, String kubeNamespace, PodInfo podInfo, TwillSpecification spec,
+  KubeTwillPreparer(ApiClient apiClient, String kubeNamespace, PodInfo podInfo, TwillSpecification spec,
                     RunId twillRunId, V1ObjectMeta resourceMeta, float cpuScalingFactor, KubeTwillControllerFactory controllerFactory) {
     // only expect one runnable for now
     if (spec.getRunnables().size() != 1) {

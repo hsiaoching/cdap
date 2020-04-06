@@ -16,7 +16,6 @@
 
 package io.cdap.cdap.k8s.runtime;
 
-import io.cdap.cdap.common.conf.CConfiguration;
 import com.google.common.annotations.VisibleForTesting;
 import io.cdap.cdap.master.environment.k8s.PodInfo;
 import io.kubernetes.client.ApiClient;
@@ -82,7 +81,6 @@ import java.util.stream.Collectors;
  */
 class KubeTwillPreparer implements TwillPreparer {
 
-  private final CConfiguration cConf;
   private static final Logger LOG = LoggerFactory.getLogger(KubeTwillPreparer.class);
   // Just use a static for the container inside pod that runs CDAP app.
   private static final String CONTAINER_NAME = "cdap-app-container";
@@ -99,6 +97,7 @@ class KubeTwillPreparer implements TwillPreparer {
   private final Map<String, Map<String, String>> environments;
   private final RunId twillRunId;
   private final V1ObjectMeta resourceMeta;
+  private final float cpuScalingFactor;
   private final KubeTwillControllerFactory controllerFactory;
   private final URI appSpec;
   private final URI programOptions;
@@ -106,12 +105,11 @@ class KubeTwillPreparer implements TwillPreparer {
   private final int vcores;
 
   KubeTwillPreparer(CConfiguration cConf, ApiClient apiClient, String kubeNamespace, PodInfo podInfo, TwillSpecification spec,
-                    RunId twillRunId, V1ObjectMeta resourceMeta, KubeTwillControllerFactory controllerFactory) {
+                    RunId twillRunId, V1ObjectMeta resourceMeta, float cpuScalingFactor, KubeTwillControllerFactory controllerFactory) {
     // only expect one runnable for now
     if (spec.getRunnables().size() != 1) {
       throw new IllegalStateException("Kubernetes runner currently only supports one Twill Runnable");
     }
-    this.cConf = cConf;
     this.apiClient = apiClient;
     this.kubeNamespace = kubeNamespace;
     this.podInfo = podInfo;
@@ -121,6 +119,7 @@ class KubeTwillPreparer implements TwillPreparer {
     this.environments = runnables.stream().collect(Collectors.toMap(r -> r, r -> new HashMap<>()));
     this.twillRunId = twillRunId;
     this.resourceMeta = resourceMeta;
+    this.cpuScalingFactor = cpuScalingFactor;
     RuntimeSpecification runtimeSpecification = spec.getRunnables().values().iterator().next();
     ResourceSpecification resourceSpecification = runtimeSpecification.getResourceSpecification();
     this.appSpec = runtimeSpecification.getLocalFiles().stream()
@@ -457,7 +456,7 @@ class KubeTwillPreparer implements TwillPreparer {
 
     V1ResourceRequirements resourceRequirements = new V1ResourceRequirements();
     Map<String, Quantity> quantityMap = new HashMap<>();
-    quantityMap.put("cpu", new Quantity(String.valueOf(vcores * cConf.getFloat(TWILL_KUBE_CPU_SCALING))));
+    quantityMap.put("cpu", new Quantity(String.valueOf(vcores * cpuScalingFactor)));
     // Use slight larger container size
     quantityMap.put("memory", new Quantity(String.format("%dMi", (int) (memoryMB * 1.2f))));
     resourceRequirements.setRequests(quantityMap);

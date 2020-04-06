@@ -67,6 +67,8 @@ public class KubeMasterEnvironment implements MasterEnvironment {
   // needed to propagate to deployments created via the KubeTwillRunnerService
   private static final Set<String> CONFIG_NAMES = ImmutableSet.of("cdap-conf", "hadoop-conf", "cdap-security");
 
+  private static final String CPU_SCALING_FACTOR = "kube.twill.cpu.scaling.factor";
+
   private static final String MASTER_MAX_INSTANCES = "master.service.max.instances";
   private static final String DATA_TX_ENABLED = "data.tx.enabled";
 
@@ -149,7 +151,9 @@ public class KubeMasterEnvironment implements MasterEnvironment {
                namespace, podKillerSelector, delayMillis);
     }
 
-    twillRunner = new KubeTwillRunnerService(namespace, discoveryService, podInfo, resourcePrefix,
+    float cpuScalingFactor = Float.parseFloat(conf.get(CPU_SCALING_FACTOR));
+
+    twillRunner = new KubeTwillRunnerService(namespace, discoveryService, podInfo, resourcePrefix, cpuScalingFactor,
                                              Collections.singletonMap(instanceLabel, instanceName));
     LOG.info("Kubernetes environment initialized with pod labels {}", podLabels);
   }

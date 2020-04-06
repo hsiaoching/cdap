@@ -215,7 +215,7 @@
   </property>
 
   <property>
-    <name>twill.kube.cpu.scaling.factor</name>
+    <name>kube.twill.cpu.scaling.factor</name>
     <value>1.0</value>
     <description>
       The cpu scaling factor.

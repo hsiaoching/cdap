@@ -151,7 +151,12 @@ public class KubeMasterEnvironment implements MasterEnvironment {
                namespace, podKillerSelector, delayMillis);
     }
 
-    float cpuScalingFactor = conf.get(CPU_SCALING_FACTOR);
+    float cpuScalingFactor;
+    try {
+      cpuScalingFactor = Float.parseFloat(conf.get(CPU_SCALING_FACTOR));
+    } catch (NumberFormatException e) {
+      throw new IllegalOptionValueException(getName(), conf.get(CPU_SCALING_FACTOR));
+    }
 
     twillRunner = new KubeTwillRunnerService(namespace, discoveryService, podInfo, resourcePrefix, cpuScalingFactor,
                                              Collections.singletonMap(instanceLabel, instanceName));

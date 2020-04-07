@@ -456,7 +456,7 @@ class KubeTwillPreparer implements TwillPreparer {
 
     V1ResourceRequirements resourceRequirements = new V1ResourceRequirements();
     Map<String, Quantity> quantityMap = new HashMap<>();
-    quantityMap.put("cpu", new Quantity(String.valueOf(vcores * cpuScalingFactor)));
+    quantityMap.put("cpu", new Quantity(String.valueOf((float) (vCores * cpuScalingFactor))));
     // Use slight larger container size
     quantityMap.put("memory", new Quantity(String.format("%dMi", (int) (memoryMB * 1.2f))));
     resourceRequirements.setRequests(quantityMap);

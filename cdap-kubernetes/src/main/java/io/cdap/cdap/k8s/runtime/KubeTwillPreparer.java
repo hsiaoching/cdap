@@ -105,7 +105,8 @@ class KubeTwillPreparer implements TwillPreparer {
   private final int vcores;
 
   KubeTwillPreparer(ApiClient apiClient, String kubeNamespace, PodInfo podInfo, TwillSpecification spec,
-                    RunId twillRunId, V1ObjectMeta resourceMeta, float cpuScalingFactor, KubeTwillControllerFactory controllerFactory) {
+                    RunId twillRunId, V1ObjectMeta resourceMeta, float cpuScalingFactor,
+                    KubeTwillControllerFactory controllerFactory) {
     // only expect one runnable for now
     if (spec.getRunnables().size() != 1) {
       throw new IllegalStateException("Kubernetes runner currently only supports one Twill Runnable");

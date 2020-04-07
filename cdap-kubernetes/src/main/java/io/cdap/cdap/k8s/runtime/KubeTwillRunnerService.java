@@ -93,6 +93,7 @@ public class KubeTwillRunnerService implements TwillRunnerService {
 
   private final String kubeNamespace;
   private final String resourcePrefix;
+  private final float cpuScalingFactor;
   private final PodInfo podInfo;
   private final DiscoveryServiceClient discoveryServiceClient;
   private final Map<String, String> extraLabels;
@@ -103,7 +104,8 @@ public class KubeTwillRunnerService implements TwillRunnerService {
   private ApiClient apiClient;
 
   public KubeTwillRunnerService(String kubeNamespace, DiscoveryServiceClient discoveryServiceClient,
-                                PodInfo podInfo, String resourcePrefix, float cpuScalingFactor, Map<String, String> extraLabels) {
+                                PodInfo podInfo, String resourcePrefix, float cpuScalingFactor,
+                                Map<String, String> extraLabels) {
     this.kubeNamespace = kubeNamespace;
     this.podInfo = podInfo;
     this.resourcePrefix = resourcePrefix;

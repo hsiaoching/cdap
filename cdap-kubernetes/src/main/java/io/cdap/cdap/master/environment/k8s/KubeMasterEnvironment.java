@@ -67,13 +67,13 @@ public class KubeMasterEnvironment implements MasterEnvironment {
   // needed to propagate to deployments created via the KubeTwillRunnerService
   private static final Set<String> CONFIG_NAMES = ImmutableSet.of("cdap-conf", "hadoop-conf", "cdap-security");
 
-  private static final String CPU_SCALING_FACTOR = "kube.twill.cpu.scaling.factor";
-
   private static final String MASTER_MAX_INSTANCES = "master.service.max.instances";
   private static final String DATA_TX_ENABLED = "data.tx.enabled";
 
   private static final String NAMESPACE_KEY = "master.environment.k8s.namespace";
   private static final String INSTANCE_LABEL = "master.environment.k8s.instance.label";
+  private static final String CPU_SCALING_FACTOR = "master.environment.k8s.container.cpu.scaling.factor";
+  //private static final String MEMORY_SCALING_FACTOR = "master.environment.k8s.container.memory.scaling.factor";
   // Label for the container name
   private static final String CONTAINER_LABEL = "master.environment.k8s.container.label";
   private static final String POD_INFO_DIR = "master.environment.k8s.pod.info.dir";

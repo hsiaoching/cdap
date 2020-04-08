@@ -88,7 +88,6 @@ class KubeTwillPreparer implements TwillPreparer {
   // These are equal to the constants used in DistributedProgramRunner
   private static final String APP_SPEC = "appSpec.json";
   private static final String PROGRAM_OPTIONS = "program.options.json";
-  private static final String TWILL_KUBE_CPU_SCALING = "twill.kube.cpu.scaling.factor";
   private final ApiClient apiClient;
   private final String kubeNamespace;
   private final PodInfo podInfo;
